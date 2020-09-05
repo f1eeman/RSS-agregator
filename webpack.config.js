@@ -1,7 +1,6 @@
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import './src/style.css';
-import './src/index';
 
 module.exports = {
   entry: './src/index.js',

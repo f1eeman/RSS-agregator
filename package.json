@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "third project(hexlet.io)",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "NODE_ENV='production' webpack",
     "start": "webpack-dev-server",
