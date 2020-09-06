@@ -1,6 +1,7 @@
-import path from 'path';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import './src/style.css';
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+// import path from 'path';
+// import HtmlWebpackPlugin from 'html-webpack-plugin';
 
 module.exports = {
   entry: './src/index.js',
