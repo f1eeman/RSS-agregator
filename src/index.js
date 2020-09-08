@@ -60,6 +60,7 @@ pageMainRow.classList.add('row');
 pageMainContainer.classList.add('container');
 pageMain.append(jumbotron, pageMainContainer);
 pageFooterTextWrap.textContent = 'created by Hexlet';
+pageFooterTextWrap.classList.add('text-center');
 pageFooterContainer.classList.add('container');
 pageFooterContainer.appendChild(pageFooterTextWrap);
 pageFooter.appendChild(pageFooterContainer);
