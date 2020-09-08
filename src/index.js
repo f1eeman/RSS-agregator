@@ -64,4 +64,5 @@ pageFooterTextWrap.classList.add('text-center');
 pageFooterContainer.classList.add('container');
 pageFooterContainer.appendChild(pageFooterTextWrap);
 pageFooter.appendChild(pageFooterContainer);
+pageFooter.classList.add('footer', 'border-top', 'py-3', 'mt-5');
 bodyElement.prepend(pageMain, pageFooter);
