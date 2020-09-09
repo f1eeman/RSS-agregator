@@ -1,4 +1,9 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
+import _ from 'lodash';
+import * as yup from 'yup';
+import onChange from 'on-change';
+import axios from 'axios';
+import renderErrors from './view.js';
 
 const bodyElement = document.body;
 bodyElement.classList.add('d-flex', 'flex-column', 'min-vh-100');
@@ -66,3 +71,61 @@ pageFooterContainer.appendChild(pageFooterTextWrap);
 pageFooter.appendChild(pageFooterContainer);
 pageFooter.classList.add('footer', 'border-top', 'py-3', 'mt-5');
 bodyElement.prepend(pageMain, pageFooter);
+
+const schema = yup
+  .string()
+  .required()
+  .url();
+
+const errorMessages = {
+  network: {
+    error: 'Network problems. Try again.',
+  },
+};
+
+const validate = (link, addedLinks = []) => {
+  try {
+    schema
+      .notOneOf(addedLinks)
+      .validateSync(link, { abortEarly: false });
+    return {};
+  } catch (e) {
+    return e.inner;
+  }
+};
+
+const updateValidationState = (watchedState) => {
+  const error = validate(watchedState.form.fields.link);
+  watchedState.form.valid = _.isEqual(error, {});
+  watchedState.form.error = error;
+};
+
+const state = {
+  form: {
+    processState: 'filling',
+    processError: null,
+    fields: {
+      link: '',
+    },
+    valid: true,
+    error: {},
+  },
+};
+
+const watchedState = onChange(state, (path, value) => {
+  switch (path) {
+    case 'form.error':
+      renderErrors(fieldElement, value);
+      break;
+    default:
+      break;
+  }
+});
+
+formElement.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  watchedState.form.fields.link = formData.get('name');
+  updateValidationState(watchedState);
+  // console.log(watchedState);
+});
