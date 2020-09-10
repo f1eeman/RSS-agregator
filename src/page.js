@@ -35,6 +35,7 @@ const renderPage = () => {
   submitElement.type = 'submit';
   submitElement.textContent = 'Add';
   submitElement.classList.add('btn', 'btn-lg', 'btn-primary', 'px-sm-5');
+  submitElement.setAttribute('data-btn', 'submit-btn');
   formCol1.classList.add('col');
   formCol1.appendChild(fieldElement);
   formCol2.classList.add('col-auto');

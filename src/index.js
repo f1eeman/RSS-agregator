@@ -12,6 +12,7 @@ renderPage();
 const proxy = 'https://cors-anywhere.herokuapp.com/';
 const formElement = document.querySelector('[data-form="rss-form"]');
 const fieldElement = document.querySelector('input[name="url"]');
+const submitBtn = document.querySelector('[data-btn="submit-btn"]');
 const dataContainer = document.querySelector('[data-container="content"]');
 
 const schema = yup
@@ -37,7 +38,7 @@ const validate = (link) => {
 
 const updateValidationState = (watchedState) => {
   const errors = validate(watchedState.form.fields.link);
-  console.log('errors', errors);
+  // console.log('errors', errors);
   watchedState.form.valid = _.isEqual(errors, {});
   watchedState.form.errors = errors;
 };
@@ -54,10 +55,26 @@ const state = {
   },
 };
 
+const processStateHandler = (processState) => {
+  switch (processState) {
+    case 'filling':
+      submitBtn.disabled = false;
+      break;
+    case 'processing':
+      submitBtn.disabled = true;
+      break;
+    default:
+      throw new Error(`Unknown state's process: ${processState}`);
+  }
+};
+
 const watchedState = onChange(state, (path, value) => {
   switch (path) {
     case 'form.errors':
       renderErrors(fieldElement, value);
+      break;
+    case 'form.processState':
+      processStateHandler(value);
       break;
     default:
       break;
@@ -67,13 +84,15 @@ const watchedState = onChange(state, (path, value) => {
 formElement.addEventListener('submit', (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  watchedState.form.fields.link = formData.get('name');
+  watchedState.form.fields.link = formData.get('url');
   updateValidationState(watchedState);
-  console.log(watchedState);
+  // console.log(watchedState);
   if (!watchedState.form.valid) {
     return;
   }
+  watchedState.form.processState = 'processing';
   axios.get(`${proxy}${watchedState.form.fields.link}`)
+    .then((response) => parse(response))
     .then(console.log)
     .catch((error) => console.log('error', error));
 });
