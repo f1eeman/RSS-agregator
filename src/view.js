@@ -1,7 +1,7 @@
 const renderErrors = (element, error) => {
   const errorElement = element.nextElementSibling;
   if (errorElement) {
-    // element.classList.remove('is-invalid');
+    element.classList.remove('is-invalid');
     errorElement.remove();
   }
   if (!error) {
