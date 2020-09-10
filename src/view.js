@@ -6,7 +6,7 @@ const renderErrors = (element, errors) => {
     element.classList.remove('is-invalid');
     errorElement.remove();
   }
-  if (_.isEqual(errors, {})) {
+  if (_.isEqual(errors, {}) || !errors) {
     return;
   }
   const feedbackElement = document.createElement('div');
@@ -16,4 +16,17 @@ const renderErrors = (element, errors) => {
   element.after(feedbackElement);
 };
 
-export default renderErrors;
+const renderFeeds = (container, { name }) => {
+  const title = document.createElement('h2');
+  title.textContent = name;
+  container.appendChild(title);
+};
+
+const renderPosts = (container, posts) => {
+  const items = posts.map(({ title, link }) => `<li><a href="${link}">${title}</li>`).join('');
+  const list = document.createElement('ul');
+  list.innerHTML = items;
+  container.appendChild(list);
+};
+
+export { renderErrors, renderFeeds, renderPosts };

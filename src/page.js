@@ -19,7 +19,6 @@ const renderPage = () => {
   const pageMainContainer = document.createElement('div');
   const pageMainRow = document.createElement('div');
   const pageMainCol = document.createElement('div');
-  pageMainCol.setAttribute('data-container', 'content');
   const pageFooter = document.createElement('footer');
   const pageFooterContainer = document.createElement('div');
   const pageFooterTextWrap = document.createElement('p');
@@ -58,8 +57,11 @@ const renderPage = () => {
   jumbotron.appendChild(jumbotronContainer);
   pageMain.classList.add('flex-grow-1');
   pageMainCol.classList.add('col-md-10', 'col-lg-8', 'mx-auto', 'feeds');
+  pageMainCol.setAttribute('data-container', 'content');
   pageMainRow.classList.add('row');
+  pageMainRow.appendChild(pageMainCol);
   pageMainContainer.classList.add('container');
+  pageMainContainer.appendChild(pageMainRow);
   pageMain.append(jumbotron, pageMainContainer);
   pageFooterTextWrap.textContent = 'created by Hexlet';
   pageFooterTextWrap.classList.add('text-center');
