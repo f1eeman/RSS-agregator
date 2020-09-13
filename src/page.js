@@ -24,15 +24,13 @@ const renderPage = () => {
   const pageFooterTextWrap = document.createElement('p');
 
   processInfo.classList.add('processInfo');
-  hint.textContent = 'Example: https://ru.hexlet.io/lessons.rss';
   hint.classList.add('text-muted', 'my-1');
+  hint.setAttribute('data-hint', 'hint');
   fieldElement.type = 'text';
   fieldElement.classList.add('form-control', 'form-control-lg', 'w-100');
   fieldElement.name = 'url';
-  fieldElement.placeholder = 'RSS link';
   fieldElement.setAttribute('required', '');
   submitElement.type = 'submit';
-  submitElement.textContent = 'Add';
   submitElement.classList.add('btn', 'btn-lg', 'btn-primary', 'px-sm-5');
   submitElement.setAttribute('data-btn', 'submit-btn');
   formCol1.classList.add('col');
@@ -43,10 +41,10 @@ const renderPage = () => {
   formRow.append(formCol1, formCol2);
   formElement.appendChild(formRow);
   formElement.setAttribute('data-form', 'rss-form');
-  info.textContent = 'Start reading RSS today! It is easy, it is nicely.';
   info.classList.add('lead');
-  title1.textContent = 'RSS Reader';
+  info.setAttribute('data-info', 'info');
   title1.classList.add('display-3');
+  title1.setAttribute('data-title', 'main-title');
   jumbotronCol.classList.add('col-md-10', 'col-lg-8', 'mx-auto', 'text-white');
   jumbotronCol.append(title1, info, formElement, hint, processInfo);
   jumbotronRow.classList.add('row');
@@ -63,9 +61,9 @@ const renderPage = () => {
   pageMainContainer.classList.add('container');
   pageMainContainer.appendChild(pageMainRow);
   pageMain.append(jumbotron, pageMainContainer);
-  pageFooterTextWrap.textContent = 'created by Hexlet';
   pageFooterTextWrap.classList.add('text-center');
   pageFooterContainer.classList.add('container');
+  pageFooterTextWrap.setAttribute('data-copyright', 'by-hexlet');
   pageFooterContainer.appendChild(pageFooterTextWrap);
   pageFooter.appendChild(pageFooterContainer);
   pageFooter.classList.add('footer', 'border-top', 'py-3', 'mt-5');

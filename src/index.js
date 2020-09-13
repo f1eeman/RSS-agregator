@@ -2,10 +2,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import _ from 'lodash';
 import * as yup from 'yup';
 import onChange from 'on-change';
+import i18next from 'i18next';
 import axios from 'axios';
 import { renderErrors, renderFeeds, renderPosts } from './view.js';
 import renderPage from './page.js';
 import parse from './parser';
+import resources from './locales';
 
 renderPage();
 
@@ -14,11 +16,39 @@ const formElement = document.querySelector('[data-form="rss-form"]');
 const fieldElement = document.querySelector('input[name="url"]');
 const submitBtn = document.querySelector('[data-btn="submit-btn"]');
 const dataContainer = document.querySelector('[data-container="content"]');
+const mainTitle = document.querySelector('[data-title="main-title"]');
+const hint = document.querySelector('[data-hint="hint"]');
+const info = document.querySelector('[data-info="info"]');
+const copyright = document.querySelector('[data-copyright="by-hexlet"]');
+
+i18next.init({
+  lng: 'en',
+  debug: true,
+  resources,
+})
+  .then(() => {
+    mainTitle.textContent = i18next.t('mainTitle');
+  })
+  .then(() => {
+    hint.textContent = i18next.t('hint');
+  })
+  .then(() => {
+    submitBtn.textContent = i18next.t('buttonText');
+  })
+  .then(() => {
+    info.textContent = i18next.t('info');
+  })
+  .then(() => {
+    copyright.textContent = i18next.t('copyright');
+  })
+  .then(() => {
+    fieldElement.placeholder = i18next.t('placeholder');
+  });
 
 const schema = yup
   .string()
   .required()
-  .url();
+  .url(i18next.t('validUrl'));
 
 const errorMessages = {
   network: {
@@ -29,7 +59,7 @@ const errorMessages = {
 const validate = (link, addedLinks) => {
   try {
     schema
-      .notOneOf(addedLinks)
+      .notOneOf(addedLinks, i18next.t('double'))
       .validateSync(link, { abortEarly: false });
     return {};
   } catch (e) {
@@ -40,6 +70,8 @@ const validate = (link, addedLinks) => {
 const updateValidationState = (watchedState) => {
   const errors = validate(watchedState.form.fields.link, watchedState.form.addedLinks);
   console.log('errors', errors);
+  /* eslint no-param-reassign:
+    ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
   watchedState.form.valid = _.isEqual(errors, {});
   watchedState.form.errors = errors;
 };
@@ -108,6 +140,7 @@ formElement.addEventListener('submit', (e) => {
   if (!watchedState.form.valid) {
     return;
   }
+
   watchedState.form.processState = 'processing';
   axios.get(`${proxy}${watchedState.form.fields.link}`)
     .then((response) => parse(response.data))
