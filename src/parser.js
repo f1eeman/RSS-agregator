@@ -1,6 +1,7 @@
 const getItem = (element) => ({
   title: element.querySelector('title').textContent,
   link: element.querySelector('link').textContent,
+  id: element.querySelector('guid').textContent,
 });
 
 const parse = (str) => {

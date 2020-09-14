@@ -6,11 +6,13 @@ import i18next from 'i18next';
 import axios from 'axios';
 import { renderErrors, renderFeeds, renderPosts } from './view.js';
 import renderPage from './page.js';
-import parse from './parser';
-import resources from './locales';
+import parse from './parser.js';
+import resources from './locales.js';
+import autoUpdate from './auto-update.js';
 
 renderPage();
 
+const period = 5000;
 const proxy = 'https://cors-anywhere.herokuapp.com/';
 const formElement = document.querySelector('[data-form="rss-form"]');
 const fieldElement = document.querySelector('input[name="url"]');
@@ -143,15 +145,19 @@ formElement.addEventListener('submit', (e) => {
 
   watchedState.form.processState = 'processing';
   axios.get(`${proxy}${watchedState.form.fields.link}`)
+    // .then((response) => console.log(response.data))
     .then((response) => parse(response.data))
     .then((data) => {
       const newFeed = { id: _.uniqueId(), name: data.name };
       const newPosts = data.items.map(
-        ({ title, link }) => ({ feedId: newFeed.id, title, link }),
+        ({ title, link, id }) => ({
+          feedId: newFeed.id, title, link, id,
+        }),
       );
       watchedState.form.feeds.push(newFeed);
       watchedState.form.posts.push(...newPosts);
       watchedState.form.addedLinks.push(url);
+      autoUpdate(watchedState.form.addedLinks, period, watchedState);
     })
     .then(() => {
       watchedState.form.processState = 'filling';
