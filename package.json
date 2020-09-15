@@ -1,12 +1,10 @@
 {
-  "name": "frontend-project-lvl3",
+  "name": "rss-agregator",
   "version": "1.0.0",
-  "description": "third project(hexlet.io)",
-  "private": true,
+  "description": "RSS news feed with automatic updates",
   "scripts": {
     "build": "NODE_ENV='production' webpack",
-    "start": "webpack-dev-server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "webpack-dev-server"
   },
   "repository": {
     "type": "git",

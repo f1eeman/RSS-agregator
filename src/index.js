@@ -8,7 +8,6 @@ import { renderErrors, renderFeeds, renderPosts } from './view.js';
 import renderPage from './page.js';
 import parse from './parser.js';
 import resources from './locales.js';
-import autoUpdate from './auto-update.js';
 
 renderPage();
 
@@ -71,7 +70,7 @@ const validate = (link, addedLinks) => {
 
 const updateValidationState = (watchedState) => {
   const errors = validate(watchedState.form.fields.link, watchedState.form.addedLinks);
-  console.log('errors', errors);
+  // console.log('errors', errors);
   /* eslint no-param-reassign:
     ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
   watchedState.form.valid = _.isEqual(errors, {});
@@ -118,12 +117,12 @@ const watchedState = onChange(state, (path, value) => {
       processStateHandler(value);
       break;
     case 'form.feeds':
-      console.log('value', value);
-      console.log(dataContainer);
+      // console.log('value', value);
+      // console.log(dataContainer);
       renderFeeds(dataContainer, value[value.length - 1]);
       break;
     case 'form.posts':
-      console.log(dataContainer);
+      // console.log(dataContainer);
       renderPosts(dataContainer, value);
       break;
     default:
@@ -131,12 +130,32 @@ const watchedState = onChange(state, (path, value) => {
   }
 });
 
+const autoUpdate = (links) => {
+  const urls = links.map((link) => `${proxy}${link}`);
+  urls.forEach((url) => {
+    axios.get(url)
+      .then((response) => parse(response.data))
+      .then((data) => {
+        const newFeed = { id: _.uniqueId(), name: data.name };
+        const newPosts = data.items.map(
+          ({ title, link, id }) => ({
+            feedId: newFeed.id, title, link, id,
+          }),
+        );
+        const postsIds = watchedState.form.posts.map((post) => post.id);
+        const filtredPosts = newPosts.filter(({ id }) => !postsIds.includes(id));
+        watchedState.form.posts.push(...filtredPosts);
+      });
+  });
+  setTimeout(autoUpdate.bind(null, links), period);
+};
+
 formElement.addEventListener('submit', (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   const url = formData.get('url');
   watchedState.form.fields.link = url;
-  console.log(state);
+  // console.log(state);
   updateValidationState(watchedState);
   // console.log(watchedState);
   if (!watchedState.form.valid) {
