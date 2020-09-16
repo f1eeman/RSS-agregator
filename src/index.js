@@ -5,11 +5,8 @@ import onChange from 'on-change';
 import i18next from 'i18next';
 import axios from 'axios';
 import { renderErrors, renderFeeds, renderPosts } from './view.js';
-import renderPage from './page.js';
 import parse from './parser.js';
 import resources from './locales.js';
-
-renderPage();
 
 const period = 5000;
 const proxy = 'https://cors-anywhere.herokuapp.com/';

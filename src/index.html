@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rss-aggregator</title>
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <main class="flex-grow-1">
+    <div class="jumbotron jumbotron-fluid bg-dark">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-10 col-lg-8 mx-auto text-white">
+            <h1 class="display-3" data-title="main-title"></h1>
+            <p class="lead" data-info="info"></p>
+            <form action="" data-form="rss-form">
+              <div class="form-row">
+                <div class="col">
+                  <input class="form-control form-control-lg w-100" type="text" name="url" id="" required>
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-lg btn-primary px-sm-5" type="submit" data-btn="submit-btn"></button>
+                </div>
+              </div>
+            </form>
+            <p class="text-muted my-1" data-hint="hint"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 mx-auto feeds" data-container="content"></div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer border-top py-3 mt-5">
+    <div class="container">
+      <p class="text-center" data-copyright="by-hexlet"></p>
+    </div>
+  </footer>
+</body>
+</html>
