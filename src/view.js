@@ -51,4 +51,13 @@ const renderPosts = (allPosts) => {
   });
 };
 
-export { renderErrors, renderFeeds, renderPosts };
+const renderSpinner = (btn) => {
+  const spinnerEl = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Load';
+  /* eslint no-param-reassign:
+  ["error", { "props": true, "ignorePropertyModificationsFor": ["btn"] }] */
+  btn.innerHTML = spinnerEl;
+};
+
+export {
+  renderErrors, renderFeeds, renderPosts, renderSpinner,
+};
