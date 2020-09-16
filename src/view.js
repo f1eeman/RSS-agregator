@@ -31,7 +31,7 @@ const renderFeeds = (wrapper, { name, id }) => {
 const renderPosts = (allPosts) => {
   const sectionsColl = document.querySelectorAll('[data-section-id]');
   sectionsColl.forEach((s) => {
-    const currentFeedId = s.dataset.id;
+    const currentFeedId = s.dataset.sectionId;
     const list = s.querySelector(`[data-list-id="${currentFeedId}"]`);
     const currentFeedPosts = allPosts.filter(({ feedId }) => {
       // console.log('feedId', feedId);

@@ -11,7 +11,7 @@ import resources from './locales.js';
 
 renderPage();
 
-// const period = 5000;
+const period = 5000;
 const proxy = 'https://cors-anywhere.herokuapp.com/';
 const formElement = document.querySelector('[data-form="rss-form"]');
 const fieldElement = document.querySelector('input[name="url"]');
@@ -21,6 +21,8 @@ const mainTitle = document.querySelector('[data-title="main-title"]');
 const hint = document.querySelector('[data-hint="hint"]');
 const info = document.querySelector('[data-info="info"]');
 const copyright = document.querySelector('[data-copyright="by-hexlet"]');
+
+fieldElement.select();
 
 i18next.init({
   lng: 'en',
@@ -69,7 +71,8 @@ const validate = (link, addedLinks) => {
 };
 
 const updateValidationState = (watchedState) => {
-  const errors = validate(watchedState.form.fields.link, watchedState.form.addedLinks);
+  const addedLinks = watchedState.form.addedLinks.map(({ link }) => link);
+  const errors = validate(watchedState.form.fields.link, addedLinks);
   // console.log('errors', errors);
   /* eslint no-param-reassign:
     ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
@@ -137,33 +140,32 @@ const watchedState = onChange(state, (path, currentValue) => {
   }
 });
 
-// const autoUpdate = (links) => {
-//   const urls = links.map((link) => `${proxy}${link}`);
-//   urls.forEach((url) => {
-//     axios.get(url)
-//       .then((response) => parse(response.data))
-//       .then((data) => {
-//         const newFeed = { id: _.uniqueId(), name: data.name };
-//         const newPosts = data.items.map(
-//           ({ title, link, id }) => ({
-//             feedId: newFeed.id, title, link, id,
-//           }),
-//         );
-//         const postsIds = watchedState.form.posts.map((post) => post.id);
-//         const filtredPosts = newPosts.filter(({ id }) => !postsIds.includes(id));
-//         // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-//         // console.log('watchedState.form.posts', watchedState.form.posts);
-//         // console.log('postsIds', postsIds);
-//         // console.log('newPosts', newPosts);
-//         // console.log('filtredPosts', filtredPosts);
-//         if (filtredPosts.length > 0) {
-//           watchedState.form.posts.push(...filtredPosts);
-//         }
-//         // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-//       });
-//   });
-//   setTimeout(autoUpdate.bind(null, links), period);
-// };
+const autoUpdate = (links) => {
+  const urls = links.map(({ link, feedId }) => ({ url: `${proxy}${link}`, feedId }));
+  urls.forEach(({ url, feedId }) => {
+    axios.get(url)
+      .then((response) => parse(response.data))
+      .then((data) => {
+        const newPosts = data.items.map(
+          ({ title, link, id }) => ({
+            feedId, title, link, id,
+          }),
+        );
+        const exisitingPostsIds = watchedState.form.posts.map((post) => post.id);
+        const filtredPosts = newPosts.filter(({ id }) => !exisitingPostsIds.includes(id));
+        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        // console.log('watchedState.form.posts', watchedState.form.posts);
+        // console.log('postsIds', postsIds);
+        // console.log('newPosts', newPosts);
+        // console.log('filtredPosts', filtredPosts);
+        if (filtredPosts.length > 0) {
+          watchedState.form.posts.push(...filtredPosts);
+        }
+        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+      });
+  });
+  setTimeout(autoUpdate.bind(null, links), period);
+};
 
 fieldElement.addEventListener('change', ({ target }) => {
   watchedState.form.fields.link = target.value;
@@ -187,16 +189,17 @@ formElement.addEventListener('submit', (e) => {
     // .then((response) => console.log(response.data))
     .then((response) => parse(response.data))
     .then((data) => {
-      const newFeed = { id: _.uniqueId(), name: data.name };
+      const feedId = _.uniqueId();
+      const newFeed = { id: feedId, name: data.name };
       const newPosts = data.items.map(
         ({ title, link, id }) => ({
-          feedId: newFeed.id, title, link, id,
+          feedId, title, link, id,
         }),
       );
       watchedState.form.feeds.push(newFeed);
       watchedState.form.posts.push(...newPosts);
-      watchedState.form.addedLinks.push(watchedState.form.fields.link);
-      // autoUpdate(watchedState.form.addedLinks, period, watchedState);
+      watchedState.form.addedLinks.push({ link: watchedState.form.fields.link, feedId });
+      autoUpdate(watchedState.form.addedLinks, period, watchedState);
     })
     .then(() => {
       watchedState.form.processState = 'filling';
