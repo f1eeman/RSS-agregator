@@ -28,19 +28,20 @@ const renderFeeds = (wrapper, { name, id }) => {
   wrapper.prepend(section);
 };
 
-const renderPosts = (container, allPosts, oldPosts) => {
+const renderPosts = (allPosts) => {
   const sectionsColl = document.querySelectorAll('[data-section-id]');
   sectionsColl.forEach((s) => {
     const currentFeedId = s.dataset.id;
     const list = s.querySelector(`[data-list-id="${currentFeedId}"]`);
     const currentFeedPosts = allPosts.filter(({ feedId }) => {
-      console.log('feedId', feedId);
-      console.log('currentFeedId', currentFeedId);
-      return feedId === currentFeedId;
+      // console.log('feedId', feedId);
+      // console.log('currentFeedId', currentFeedId);
+      const result = feedId === currentFeedId;
+      return result;
     });
-    console.log('currentFeedPosts', currentFeedPosts);
-    console.log('allPosts', allPosts);
-    console.log('oldPosts', oldPosts);
+    // console.log('currentFeedPosts', currentFeedPosts);
+    // console.log('allPosts', allPosts);
+    // console.log('oldPosts', oldPosts);
     // const currentFeedOldPosts = oldPosts.filter(({ feedId }) => feedId === currentFeedId);
     // const currentFeedNewPosts = currentFeedPosts.filter(
     //   (post) => !currentFeedOldPosts.some((oldPost) => oldPost.id === post.id),
