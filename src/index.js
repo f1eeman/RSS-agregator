@@ -11,7 +11,7 @@ import resources from './locales.js';
 
 renderPage();
 
-const period = 5000;
+// const period = 5000;
 const proxy = 'https://cors-anywhere.herokuapp.com/';
 const formElement = document.querySelector('[data-form="rss-form"]');
 const fieldElement = document.querySelector('input[name="url"]');
@@ -108,7 +108,7 @@ const processStateHandler = (processState) => {
   }
 };
 
-const watchedState = onChange(state, (path, currentValue, prevValue) => {
+const watchedState = onChange(state, (path, currentValue) => {
   switch (path) {
     case 'form.valid':
       submitBtn.disabled = !currentValue;
@@ -130,40 +130,40 @@ const watchedState = onChange(state, (path, currentValue, prevValue) => {
       // console.log('value', currentValue);
       // console.log('prevValue', prevValue);
       // console.log('++++++++++++++++++++');
-      renderPosts(dataContainer, currentValue, prevValue);
+      renderPosts(currentValue);
       break;
     default:
       break;
   }
 });
 
-const autoUpdate = (links) => {
-  const urls = links.map((link) => `${proxy}${link}`);
-  urls.forEach((url) => {
-    axios.get(url)
-      .then((response) => parse(response.data))
-      .then((data) => {
-        const newFeed = { id: _.uniqueId(), name: data.name };
-        const newPosts = data.items.map(
-          ({ title, link, id }) => ({
-            feedId: newFeed.id, title, link, id,
-          }),
-        );
-        const postsIds = watchedState.form.posts.map((post) => post.id);
-        const filtredPosts = newPosts.filter(({ id }) => !postsIds.includes(id));
-        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-        // console.log('watchedState.form.posts', watchedState.form.posts);
-        // console.log('postsIds', postsIds);
-        // console.log('newPosts', newPosts);
-        // console.log('filtredPosts', filtredPosts);
-        if (filtredPosts.length > 0) {
-          watchedState.form.posts.push(...filtredPosts);
-        }
-        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-      });
-  });
-  setTimeout(autoUpdate.bind(null, links), period);
-};
+// const autoUpdate = (links) => {
+//   const urls = links.map((link) => `${proxy}${link}`);
+//   urls.forEach((url) => {
+//     axios.get(url)
+//       .then((response) => parse(response.data))
+//       .then((data) => {
+//         const newFeed = { id: _.uniqueId(), name: data.name };
+//         const newPosts = data.items.map(
+//           ({ title, link, id }) => ({
+//             feedId: newFeed.id, title, link, id,
+//           }),
+//         );
+//         const postsIds = watchedState.form.posts.map((post) => post.id);
+//         const filtredPosts = newPosts.filter(({ id }) => !postsIds.includes(id));
+//         // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+//         // console.log('watchedState.form.posts', watchedState.form.posts);
+//         // console.log('postsIds', postsIds);
+//         // console.log('newPosts', newPosts);
+//         // console.log('filtredPosts', filtredPosts);
+//         if (filtredPosts.length > 0) {
+//           watchedState.form.posts.push(...filtredPosts);
+//         }
+//         // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+//       });
+//   });
+//   setTimeout(autoUpdate.bind(null, links), period);
+// };
 
 fieldElement.addEventListener('change', ({ target }) => {
   watchedState.form.fields.link = target.value;
