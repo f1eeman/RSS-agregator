@@ -9,24 +9,45 @@ const renderErrors = (element, errors) => {
   if (_.isEqual(errors, {}) || !errors) {
     return;
   }
+  const [error] = errors;
   const feedbackElement = document.createElement('div');
   feedbackElement.classList.add('invalid-feedback');
-  feedbackElement.innerHTML = errors[0].message;
+  feedbackElement.innerHTML = error.message;
   element.classList.add('is-invalid');
   element.after(feedbackElement);
 };
 
-const renderFeeds = (container, { name }) => {
+const renderFeeds = (wrapper, { name, id }) => {
+  const section = document.createElement('section');
   const title = document.createElement('h2');
+  const list = document.createElement('ul');
+  list.setAttribute('data-list-id', id);
+  section.setAttribute('data-section-id', id);
   title.textContent = name;
-  container.appendChild(title);
+  section.append(title, list);
+  wrapper.prepend(section);
 };
 
-const renderPosts = (container, posts) => {
-  const items = posts.map(({ title, link }) => `<li><a href="${link}">${title}</li>`).join('');
-  const list = document.createElement('ul');
-  list.innerHTML = items;
-  container.appendChild(list);
+const renderPosts = (container, allPosts, oldPosts) => {
+  const sectionsColl = document.querySelectorAll('[data-section-id]');
+  sectionsColl.forEach((s) => {
+    const currentFeedId = s.dataset.id;
+    const list = s.querySelector(`[data-list-id="${currentFeedId}"]`);
+    const currentFeedPosts = allPosts.filter(({ feedId }) => {
+      console.log('feedId', feedId);
+      console.log('currentFeedId', currentFeedId);
+      return feedId === currentFeedId;
+    });
+    console.log('currentFeedPosts', currentFeedPosts);
+    console.log('allPosts', allPosts);
+    console.log('oldPosts', oldPosts);
+    // const currentFeedOldPosts = oldPosts.filter(({ feedId }) => feedId === currentFeedId);
+    // const currentFeedNewPosts = currentFeedPosts.filter(
+    //   (post) => !currentFeedOldPosts.some((oldPost) => oldPost.id === post.id),
+    // );
+    const listItems = currentFeedPosts.map(({ title, link }) => `<li><a href="${link}">${title}</li>`).join('');
+    list.innerHTML = listItems;
+  });
 };
 
 export { renderErrors, renderFeeds, renderPosts };

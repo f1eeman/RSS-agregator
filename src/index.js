@@ -108,22 +108,29 @@ const processStateHandler = (processState) => {
   }
 };
 
-const watchedState = onChange(state, (path, value) => {
+const watchedState = onChange(state, (path, currentValue, prevValue) => {
   switch (path) {
+    case 'form.valid':
+      submitBtn.disabled = !currentValue;
+      break;
     case 'form.errors':
-      renderErrors(fieldElement, value);
+      renderErrors(fieldElement, currentValue);
       break;
     case 'form.processState':
-      processStateHandler(value);
+      processStateHandler(currentValue);
       break;
     case 'form.feeds':
       // console.log('value', value);
       // console.log(dataContainer);
-      renderFeeds(dataContainer, value[value.length - 1]);
+      renderFeeds(dataContainer, currentValue[currentValue.length - 1]);
       break;
     case 'form.posts':
       // console.log(dataContainer);
-      renderPosts(dataContainer, value);
+      // console.log('++++++++++++++++++++');
+      // console.log('value', currentValue);
+      // console.log('prevValue', prevValue);
+      // console.log('++++++++++++++++++++');
+      renderPosts(dataContainer, currentValue, prevValue);
       break;
     default:
       break;
@@ -144,23 +151,36 @@ const autoUpdate = (links) => {
         );
         const postsIds = watchedState.form.posts.map((post) => post.id);
         const filtredPosts = newPosts.filter(({ id }) => !postsIds.includes(id));
-        watchedState.form.posts.push(...filtredPosts);
+        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        // console.log('watchedState.form.posts', watchedState.form.posts);
+        // console.log('postsIds', postsIds);
+        // console.log('newPosts', newPosts);
+        // console.log('filtredPosts', filtredPosts);
+        if (filtredPosts.length > 0) {
+          watchedState.form.posts.push(...filtredPosts);
+        }
+        // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
       });
   });
   setTimeout(autoUpdate.bind(null, links), period);
 };
 
+fieldElement.addEventListener('change', ({ target }) => {
+  watchedState.form.fields.link = target.value;
+  updateValidationState(watchedState);
+});
+
 formElement.addEventListener('submit', (e) => {
   e.preventDefault();
-  const formData = new FormData(e.target);
-  const url = formData.get('url');
-  watchedState.form.fields.link = url;
-  // console.log(state);
-  updateValidationState(watchedState);
-  // console.log(watchedState);
-  if (!watchedState.form.valid) {
-    return;
-  }
+  // const formData = new FormData(e.target);
+  // const url = formData.get('url');
+  // watchedState.form.fields.link = url;
+  // // console.log(state);
+  // updateValidationState(watchedState);
+  // // console.log(watchedState);
+  // if (!watchedState.form.valid) {
+  //   return;
+  // }
 
   watchedState.form.processState = 'processing';
   axios.get(`${proxy}${watchedState.form.fields.link}`)
@@ -175,8 +195,8 @@ formElement.addEventListener('submit', (e) => {
       );
       watchedState.form.feeds.push(newFeed);
       watchedState.form.posts.push(...newPosts);
-      watchedState.form.addedLinks.push(url);
-      autoUpdate(watchedState.form.addedLinks, period, watchedState);
+      watchedState.form.addedLinks.push(watchedState.form.fields.link);
+      // autoUpdate(watchedState.form.addedLinks, period, watchedState);
     })
     .then(() => {
       watchedState.form.processState = 'filling';
