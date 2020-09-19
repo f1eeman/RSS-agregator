@@ -81,6 +81,9 @@ const runApp = () => {
       case 'processing':
         renderSpinner(submitButtonElement);
         break;
+      case 'failed':
+        renderSpinner(submitButtonElement);
+        break;
       default:
         throw new Error(`Unknown state's process: ${processState}`);
     }
@@ -151,8 +154,8 @@ const runApp = () => {
           rssLink: watchedState.form.fields.rssLink,
         };
         const newPosts = data.items.map(
-          ({ title, rssLink, id }) => ({
-            feedId, title, rssLink, id,
+          ({ title, link, id }) => ({
+            feedId, title, link, id,
           }),
         );
         watchedState.form.feeds.push(newFeed);
@@ -161,7 +164,7 @@ const runApp = () => {
       })
       .catch(() => {
         watchedState.form.error = errorMessages.network;
-        watchedState.form.processState = 'filling';
+        watchedState.form.processState = 'failed';
       });
   });
 };

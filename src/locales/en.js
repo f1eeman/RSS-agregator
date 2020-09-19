@@ -7,7 +7,7 @@ export default {
       hint: 'Example: https://ru.hexlet.io/lessons.rss',
       copyright: 'created by Hexlet',
       addContentButton: 'Add',
-      loading: 'Load',
+      loading: ' Load...',
       double: 'Rss already exists',
       validUrl: 'this must be a valid URL',
       required: 'this is a required field',

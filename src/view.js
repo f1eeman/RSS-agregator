@@ -1,20 +1,17 @@
 import _ from 'lodash';
 import i18next from 'i18next';
 
+const periodForDeletingItem = 5000;
+
 const renderErrors = (error) => {
   if (error === 'networkError') {
-    const modalOverlayElement = document.querySelector('.modal-overlay');
-    const modalErrorElement = document.querySelector('.modal-error');
-    const errorTextElement = document.querySelector('.error-text');
-    const closeModalElement = document.querySelector('.close-modal');
-    modalOverlayElement.classList.add('modal-overlay__show');
-    modalErrorElement.classList.add('modal-error__show');
-    errorTextElement.textContent = (i18next.t(error));
-    closeModalElement.textContent = (i18next.t('closeModalButton'));
-    closeModalElement.addEventListener('click', () => {
-      modalOverlayElement.classList.remove('modal-overlay__show');
-      modalErrorElement.classList.remove('modal-error__show');
-    });
+    const alertErrorElement = document.createElement('div');
+    const hintElement = document.querySelector('.hint');
+    alertErrorElement.classList.add('alert', 'alert-danger');
+    alertErrorElement.setAttribute('role', 'alert');
+    alertErrorElement.textContent = (i18next.t(error));
+    hintElement.after(alertErrorElement);
+    setTimeout(() => alertErrorElement.remove(), periodForDeletingItem);
   } else {
     const fieldElement = document.querySelector('input[name="url"]');
     const errorElement = fieldElement.nextElementSibling;
