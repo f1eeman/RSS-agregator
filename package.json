@@ -1,5 +1,5 @@
 {
-  "name": "rss-agregator",
+  "name": "@zhanakhmetov/rss-agregator",
   "version": "1.0.0",
   "description": "RSS news feed with automatic updates",
   "scripts": {
