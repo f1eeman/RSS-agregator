@@ -9,14 +9,17 @@ import {
   renderPosts,
   renderSpinner,
   renderText,
-  renderForm,
-  renderButton,
+  resetForm,
+  toggleAccessButton,
 } from './view.js';
 import parse from './parser.js';
-import resources from './locales/en.js';
+import resources from './locales/index.js';
+
+/* eslint no-param-reassign:
+  ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
 
 const runApp = () => {
-  const period = 5000;
+  const periodForUpdatePosts = 5000;
   const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
   const formElement = document.querySelector('.rss-form');
   const fieldElement = document.querySelector('.form-control');
@@ -25,41 +28,8 @@ const runApp = () => {
 
   fieldElement.select();
 
-  i18next.init({
-    lng: 'en',
-    resources,
-  }).then(renderText.bind(null));
-
-  const schema = yup
-    .string(i18next.t('validUrl'))
-    .required(i18next.t('required'))
-    .url(i18next.t('validUrl'));
-
-  const errorMessages = {
-    network: 'networkError',
-  };
-
-  const validate = (rssLink, addedRssLinks) => {
-    try {
-      schema
-        .notOneOf(addedRssLinks, i18next.t('double'))
-        .validateSync(rssLink, { abortEarly: false });
-      return {};
-    } catch (e) {
-      return e;
-    }
-  };
-
-  const updateValidationState = (watchedState) => {
-    const addedRssLinks = watchedState.form.feeds.map(({ rssLink }) => rssLink);
-    const error = validate(watchedState.form.fields.rssLink, addedRssLinks);
-    /* eslint no-param-reassign:
-      ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
-    watchedState.form.valid = _.isEqual(error, {});
-    watchedState.form.error = error;
-  };
-
   const state = {
+    language: 'ru',
     form: {
       processState: 'filling',
       fields: {
@@ -68,17 +38,58 @@ const runApp = () => {
       feeds: [],
       posts: [],
       valid: true,
-      error: {},
+      errors: {},
     },
+    translateKeys: {
+      mainTitle: 'mainTitle',
+      promo: 'promo',
+      placeholder: 'placeholder',
+      example: 'example',
+      copyright: 'copyright',
+      addButton: 'addButton',
+      loading: 'loading',
+      double: 'double',
+      valid: 'valid',
+      required: 'required',
+      networkError: 'networkError',
+    },
+  };
+
+  i18next.init({
+    lng: state.language,
+    resources,
+  }).then(() => renderText(state.translateKeys));
+
+  const schema = yup
+    .string(state.translateKeys.validUrl)
+    .required(state.translateKeys.required)
+    .url(state.translateKeys.validUrl);
+
+  const validate = (rssLink, addedRssLinks) => {
+    try {
+      schema
+        .notOneOf(addedRssLinks, state.translateKeys.double)
+        .validateSync(rssLink, { abortEarly: false });
+      return {};
+    } catch (errors) {
+      return errors;
+    }
+  };
+
+  const updateValidationState = (watchedState) => {
+    const addedRssLinks = watchedState.form.feeds.map(({ rssLink }) => rssLink);
+    const errors = validate(`${proxyUrl}${watchedState.form.fields.rssLink}`, addedRssLinks);
+    watchedState.form.valid = _.isEqual(errors, {});
+    watchedState.form.errors = errors;
   };
 
   const processStateHandler = (processState) => {
     switch (processState) {
-      case 'filling':
-        renderForm();
+      case 'processing':
         renderSpinner(submitButtonElement);
         break;
-      case 'processing':
+      case 'finished':
+        resetForm();
         renderSpinner(submitButtonElement);
         break;
       case 'failed':
@@ -92,9 +103,9 @@ const runApp = () => {
   const watchedState = onChange(state, (path, currentValue) => {
     switch (path) {
       case 'form.valid':
-        renderButton(currentValue);
+        toggleAccessButton(currentValue);
         break;
-      case 'form.error':
+      case 'form.errors':
         renderErrors(currentValue);
         break;
       case 'form.processState':
@@ -113,8 +124,7 @@ const runApp = () => {
 
   const autoUpdate = (feeds) => {
     feeds.forEach(({ rssLink, id: feedId }) => {
-      const requestUrl = `${proxyUrl}${rssLink}`;
-      axios.get(requestUrl)
+      axios.get(rssLink)
         .then((response) => parse(response.data))
         .then((data) => {
           const newPosts = data.items.map(
@@ -129,44 +139,49 @@ const runApp = () => {
           }
         });
     });
-    setTimeout(autoUpdate.bind(null, feeds), period);
+    setTimeout(autoUpdate.bind(null, feeds), periodForUpdatePosts);
   };
 
   fieldElement.addEventListener('change', ({ target }) => {
-    watchedState.form.fields.rssLink = target.value;
-    updateValidationState(watchedState);
+    if (watchedState.form.processState !== 'processing') {
+      watchedState.form.fields.rssLink = target.value;
+      updateValidationState(watchedState);
+    }
   });
 
   formElement.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.form.processState = 'processing';
-    axios.get(`${proxyUrl}${watchedState.form.fields.rssLink}`)
-      .then((response) => {
-        watchedState.form.processState = 'filling';
-        return response;
-      })
-      .then((response) => parse(response.data))
-      .then((data) => {
-        const feedId = _.uniqueId();
-        const newFeed = {
-          id: feedId,
-          name: data.name,
-          rssLink: watchedState.form.fields.rssLink,
-        };
-        const newPosts = data.items.map(
-          ({ title, link, id }) => ({
-            feedId, title, link, id,
-          }),
-        );
-        watchedState.form.feeds.push(newFeed);
-        watchedState.form.posts.push(...newPosts);
-        autoUpdate(watchedState.form.feeds, period, watchedState);
-      })
-      .catch(() => {
-        watchedState.form.error = errorMessages.network;
-        watchedState.form.processState = 'failed';
-      });
+    if (watchedState.form.processState !== 'processing' && watchedState.form.valid) {
+      watchedState.form.processState = 'processing';
+      const requestUrl = `${proxyUrl}${watchedState.form.fields.rssLink}`;
+      axios.get(requestUrl)
+        .then((response) => parse(response.data))
+        .then((data) => {
+          const feedId = _.uniqueId();
+          const newFeed = {
+            id: feedId,
+            name: data.name,
+            rssLink: requestUrl,
+          };
+          const newPosts = data.items.map(
+            ({ title, link, id }) => ({
+              feedId, title, link, id,
+            }),
+          );
+          watchedState.form.feeds.push(newFeed);
+          watchedState.form.posts.push(...newPosts);
+        })
+        .then(() => {
+          watchedState.form.processState = 'finished';
+        })
+        .catch((errors) => {
+          console.log(errors);
+          watchedState.form.errors = errors;
+          watchedState.form.processState = 'failed';
+        });
+    }
   });
+  autoUpdate(watchedState.form.feeds);
 };
 
 export default runApp;

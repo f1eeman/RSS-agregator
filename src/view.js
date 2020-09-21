@@ -1,17 +1,20 @@
 import _ from 'lodash';
 import i18next from 'i18next';
 
-const periodForDeletingItem = 5000;
+/* eslint no-param-reassign:
+["error", { "props": true, "ignorePropertyModificationsFor": ["element"] }] */
 
-const renderErrors = (error) => {
-  if (error === 'networkError') {
+const periodForRemoveELement = 5000;
+
+const renderErrors = (errors) => {
+  if (errors.message === 'Request failed with status code 404') {
     const alertErrorElement = document.createElement('div');
     const hintElement = document.querySelector('.hint');
     alertErrorElement.classList.add('alert', 'alert-danger');
     alertErrorElement.setAttribute('role', 'alert');
-    alertErrorElement.textContent = (i18next.t(error));
+    alertErrorElement.textContent = i18next.t('networkError');
     hintElement.after(alertErrorElement);
-    setTimeout(() => alertErrorElement.remove(), periodForDeletingItem);
+    setTimeout(() => alertErrorElement.remove(), periodForRemoveELement);
   } else {
     const fieldElement = document.querySelector('input[name="url"]');
     const errorElement = fieldElement.nextElementSibling;
@@ -19,19 +22,19 @@ const renderErrors = (error) => {
       fieldElement.classList.remove('is-invalid');
       errorElement.remove();
     }
-    if (_.isEqual(error, {})) {
+    if (_.isEqual(errors, {})) {
       return;
     }
-    const { message } = error;
+    const { message } = errors;
     const feedbackElement = document.createElement('div');
     feedbackElement.classList.add('invalid-feedback');
-    feedbackElement.innerHTML = message;
+    feedbackElement.innerHTML = i18next.t(message);
     fieldElement.classList.add('is-invalid');
     fieldElement.after(feedbackElement);
   }
 };
 
-const renderForm = () => {
+const resetForm = () => {
   const formElement = document.querySelector('.rss-form');
   formElement.reset();
 };
@@ -53,17 +56,15 @@ const renderPosts = (allPosts) => {
     const currentFeedId = s.dataset.sectionId;
     const list = s.querySelector(`[data-list-id="${currentFeedId}"]`);
     const currentFeedPosts = allPosts.filter(({ feedId }) => feedId === currentFeedId);
-    const listItems = currentFeedPosts.map(({ title, link }) => `<li><a href="${link}">${title}</li>`).join('');
+    const listItems = currentFeedPosts.map(({ title, link }) => `<li><a href="${link}" target="_blank">${title}</li>`).join('');
     list.innerHTML = listItems;
   });
 };
 
 const renderSpinner = (element) => {
   if (element.disabled) {
-  /* eslint no-param-reassign:
-  ["error", { "props": true, "ignorePropertyModificationsFor": ["element"] }] */
     element.disabled = false;
-    element.innerHTML = i18next.t('addContentButton');
+    element.innerHTML = i18next.t('addButton');
   } else {
     const spinnerElement = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
     const textElement = document.createElement('span');
@@ -74,22 +75,22 @@ const renderSpinner = (element) => {
   }
 };
 
-const renderText = () => {
+const renderText = (translateKeys) => {
   const mainTitleElement = document.querySelector('.main-title');
   const hintElement = document.querySelector('.hint');
   const submitButtonElement = document.querySelector('.submit-btn');
   const copyrightElement = document.querySelector('.copyright');
   const fieldElement = document.querySelector('.form-control');
-  const infoElement = document.querySelector('.info');
-  mainTitleElement.textContent = i18next.t('mainTitle');
-  hintElement.textContent = i18next.t('hint');
-  submitButtonElement.textContent = i18next.t('addContentButton');
-  infoElement.textContent = i18next.t('info');
-  copyrightElement.textContent = i18next.t('copyright');
-  fieldElement.placeholder = i18next.t('placeholder');
+  const promoElement = document.querySelector('.info');
+  mainTitleElement.textContent = i18next.t(translateKeys.mainTitle);
+  hintElement.textContent = i18next.t(translateKeys.example);
+  submitButtonElement.textContent = i18next.t(translateKeys.addButton);
+  promoElement.textContent = i18next.t(translateKeys.promo);
+  copyrightElement.textContent = i18next.t(translateKeys.copyright);
+  fieldElement.placeholder = i18next.t(translateKeys.placeholder);
 };
 
-const renderButton = (flag) => {
+const toggleAccessButton = (flag) => {
   const submitButtonElement = document.querySelector('.submit-btn');
   submitButtonElement.disabled = !flag;
 };
@@ -100,6 +101,6 @@ export {
   renderPosts,
   renderSpinner,
   renderText,
-  renderForm,
-  renderButton,
+  resetForm,
+  toggleAccessButton,
 };
