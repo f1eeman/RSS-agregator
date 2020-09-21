@@ -175,7 +175,6 @@ const runApp = () => {
           watchedState.form.processState = 'finished';
         })
         .catch((errors) => {
-          console.log(errors);
           watchedState.form.errors = errors;
           watchedState.form.processState = 'failed';
         });
