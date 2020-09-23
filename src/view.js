@@ -6,26 +6,26 @@ import i18next from 'i18next';
 
 const periodForRemoveELement = 5000;
 
-const renderErrors = (errors) => {
-  if (errors.message === 'Request failed with status code 404') {
+const renderErrors = (error) => {
+  if (error.errorStatus) {
     const alertErrorElement = document.createElement('div');
     const hintElement = document.querySelector('.hint');
     alertErrorElement.classList.add('alert', 'alert-danger');
     alertErrorElement.setAttribute('role', 'alert');
-    alertErrorElement.textContent = i18next.t('networkError');
+    alertErrorElement.textContent = i18next.t(`networkErrors.${error.errorStatus}`);
     hintElement.after(alertErrorElement);
     setTimeout(() => alertErrorElement.remove(), periodForRemoveELement);
   } else {
-    const fieldElement = document.querySelector('input[name="url"]');
+    const fieldElement = document.querySelector('.form-control');
     const errorElement = fieldElement.nextElementSibling;
     if (errorElement) {
       fieldElement.classList.remove('is-invalid');
       errorElement.remove();
     }
-    if (_.isEqual(errors, {})) {
+    if (_.isEqual(error, {})) {
       return;
     }
-    const { message } = errors;
+    const { message } = error;
     const feedbackElement = document.createElement('div');
     feedbackElement.classList.add('invalid-feedback');
     feedbackElement.innerHTML = i18next.t(message);
@@ -39,7 +39,9 @@ const resetForm = () => {
   formElement.reset();
 };
 
-const renderFeeds = (wrapper, { name, id }) => {
+const renderFeeds = (feeds) => {
+  const { name, id } = feeds[feeds.length - 1];
+  const wrapper = document.querySelector('.wrapper');
   const sectionElement = document.createElement('section');
   const titleElement = document.createElement('h2');
   const listElement = document.createElement('ul');
@@ -75,19 +77,25 @@ const renderSpinner = (element) => {
   }
 };
 
-const renderText = (translateKeys) => {
+const renderText = () => {
   const mainTitleElement = document.querySelector('.main-title');
   const hintElement = document.querySelector('.hint');
   const submitButtonElement = document.querySelector('.submit-btn');
   const copyrightElement = document.querySelector('.copyright');
   const fieldElement = document.querySelector('.form-control');
   const promoElement = document.querySelector('.info');
-  mainTitleElement.textContent = i18next.t(translateKeys.mainTitle);
-  hintElement.textContent = i18next.t(translateKeys.example);
-  submitButtonElement.textContent = i18next.t(translateKeys.addButton);
-  promoElement.textContent = i18next.t(translateKeys.promo);
-  copyrightElement.textContent = i18next.t(translateKeys.copyright);
-  fieldElement.placeholder = i18next.t(translateKeys.placeholder);
+  const toggleLanguageElement = document.querySelector('.toggle-lang');
+  mainTitleElement.textContent = i18next.t('mainTitle');
+  hintElement.textContent = i18next.t('example');
+  submitButtonElement.textContent = i18next.t('addButton');
+  promoElement.textContent = i18next.t('promo');
+  copyrightElement.textContent = i18next.t('copyright');
+  fieldElement.placeholder = i18next.t('placeholder');
+  toggleLanguageElement.textContent = i18next.t('toggleLang');
+};
+
+const changeLanguage = (lang) => {
+  i18next.changeLanguage(lang, renderText);
 };
 
 const toggleAccessButton = (flag) => {
@@ -103,4 +111,5 @@ export {
   renderText,
   resetForm,
   toggleAccessButton,
+  changeLanguage,
 };

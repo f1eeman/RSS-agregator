@@ -8,8 +8,11 @@ export default {
     addButton: 'Add',
     loading: ' Load...',
     double: 'Rss already exists',
-    valid: 'this must be a valid URL',
+    validUrl: 'this must be a valid URL',
     required: 'this is a required field',
-    networkError: 'Network problems. Try again.',
+    networkErrors: {
+      404: 'Network problems. Try again.',
+    },
+    toggleLang: 'RU',
   },
 };

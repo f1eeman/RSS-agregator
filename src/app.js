@@ -11,6 +11,7 @@ import {
   renderText,
   resetForm,
   toggleAccessButton,
+  changeLanguage,
 } from './view.js';
 import parse from './parser.js';
 import resources from './locales/index.js';
@@ -24,8 +25,9 @@ const runApp = () => {
   const formElement = document.querySelector('.rss-form');
   const fieldElement = document.querySelector('.form-control');
   const submitButtonElement = document.querySelector('.submit-btn');
-  const dataContainerElement = document.querySelector('.wrapper');
+  const toggleLanguageElement = document.querySelector('.toggle-lang');
 
+  formElement.reset();
   fieldElement.select();
 
   const state = {
@@ -40,47 +42,34 @@ const runApp = () => {
       valid: true,
       errors: {},
     },
-    translateKeys: {
-      mainTitle: 'mainTitle',
-      promo: 'promo',
-      placeholder: 'placeholder',
-      example: 'example',
-      copyright: 'copyright',
-      addButton: 'addButton',
-      loading: 'loading',
-      double: 'double',
-      valid: 'valid',
-      required: 'required',
-      networkError: 'networkError',
-    },
   };
 
   i18next.init({
     lng: state.language,
     resources,
-  }).then(() => renderText(state.translateKeys));
+  }).then(renderText);
 
   const schema = yup
-    .string(state.translateKeys.validUrl)
-    .required(state.translateKeys.required)
-    .url(state.translateKeys.validUrl);
+    .string('validUrl')
+    .required('required')
+    .url('validUrl');
 
   const validate = (rssLink, addedRssLinks) => {
     try {
       schema
-        .notOneOf(addedRssLinks, state.translateKeys.double)
+        .notOneOf(addedRssLinks, 'double')
         .validateSync(rssLink, { abortEarly: false });
       return {};
-    } catch (errors) {
-      return errors;
+    } catch (error) {
+      return error;
     }
   };
 
   const updateValidationState = (watchedState) => {
     const addedRssLinks = watchedState.form.feeds.map(({ rssLink }) => rssLink);
-    const errors = validate(`${proxyUrl}${watchedState.form.fields.rssLink}`, addedRssLinks);
-    watchedState.form.valid = _.isEqual(errors, {});
-    watchedState.form.errors = errors;
+    const error = validate(watchedState.form.fields.rssLink, addedRssLinks);
+    watchedState.form.valid = _.isEqual(error, {});
+    watchedState.form.errors = error;
   };
 
   const processStateHandler = (processState) => {
@@ -102,6 +91,9 @@ const runApp = () => {
 
   const watchedState = onChange(state, (path, currentValue) => {
     switch (path) {
+      case 'language':
+        changeLanguage(currentValue);
+        break;
       case 'form.valid':
         toggleAccessButton(currentValue);
         break;
@@ -112,7 +104,7 @@ const runApp = () => {
         processStateHandler(currentValue);
         break;
       case 'form.feeds':
-        renderFeeds(dataContainerElement, currentValue[currentValue.length - 1]);
+        renderFeeds(currentValue);
         break;
       case 'form.posts':
         renderPosts(currentValue);
@@ -142,11 +134,14 @@ const runApp = () => {
     setTimeout(autoUpdate.bind(null, feeds), periodForUpdatePosts);
   };
 
+  toggleLanguageElement.addEventListener('click', (e) => {
+    e.preventDefault();
+    watchedState.language = watchedState.language === 'en' ? 'ru' : 'en';
+  });
+
   fieldElement.addEventListener('change', ({ target }) => {
-    if (watchedState.form.processState !== 'processing') {
-      watchedState.form.fields.rssLink = target.value;
-      updateValidationState(watchedState);
-    }
+    watchedState.form.fields.rssLink = target.value;
+    updateValidationState(watchedState);
   });
 
   formElement.addEventListener('submit', (e) => {
@@ -155,15 +150,15 @@ const runApp = () => {
       return;
     }
     watchedState.form.processState = 'processing';
-    const requestUrl = `${proxyUrl}${watchedState.form.fields.rssLink}`;
-    axios.get(requestUrl)
+    const { rssLink } = watchedState.form.fields;
+    axios.get(`${proxyUrl}${watchedState.form.fields.rssLink}`)
       .then((response) => parse(response.data))
       .then((data) => {
         const feedId = _.uniqueId();
         const newFeed = {
           id: feedId,
           name: data.name,
-          rssLink: requestUrl,
+          rssLink,
         };
         const newPosts = data.items.map(
           ({ title, link, id }) => ({
@@ -172,13 +167,12 @@ const runApp = () => {
         );
         watchedState.form.feeds.push(newFeed);
         watchedState.form.posts.push(...newPosts);
-      })
-      .then(() => {
         watchedState.form.processState = 'finished';
       })
-      .catch((errors) => {
-        watchedState.form.errors = errors;
+      .catch((error) => {
+        watchedState.form.errors = { errorStatus: error.response.status };
         watchedState.form.processState = 'failed';
+        throw error;
       });
   });
   autoUpdate(watchedState.form.feeds);
