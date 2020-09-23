@@ -151,34 +151,35 @@ const runApp = () => {
 
   formElement.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (watchedState.form.processState !== 'processing' && watchedState.form.valid) {
-      watchedState.form.processState = 'processing';
-      const requestUrl = `${proxyUrl}${watchedState.form.fields.rssLink}`;
-      axios.get(requestUrl)
-        .then((response) => parse(response.data))
-        .then((data) => {
-          const feedId = _.uniqueId();
-          const newFeed = {
-            id: feedId,
-            name: data.name,
-            rssLink: requestUrl,
-          };
-          const newPosts = data.items.map(
-            ({ title, link, id }) => ({
-              feedId, title, link, id,
-            }),
-          );
-          watchedState.form.feeds.push(newFeed);
-          watchedState.form.posts.push(...newPosts);
-        })
-        .then(() => {
-          watchedState.form.processState = 'finished';
-        })
-        .catch((errors) => {
-          watchedState.form.errors = errors;
-          watchedState.form.processState = 'failed';
-        });
+    if (watchedState.form.processState === 'processing' || !watchedState.form.valid) {
+      return;
     }
+    watchedState.form.processState = 'processing';
+    const requestUrl = `${proxyUrl}${watchedState.form.fields.rssLink}`;
+    axios.get(requestUrl)
+      .then((response) => parse(response.data))
+      .then((data) => {
+        const feedId = _.uniqueId();
+        const newFeed = {
+          id: feedId,
+          name: data.name,
+          rssLink: requestUrl,
+        };
+        const newPosts = data.items.map(
+          ({ title, link, id }) => ({
+            feedId, title, link, id,
+          }),
+        );
+        watchedState.form.feeds.push(newFeed);
+        watchedState.form.posts.push(...newPosts);
+      })
+      .then(() => {
+        watchedState.form.processState = 'finished';
+      })
+      .catch((errors) => {
+        watchedState.form.errors = errors;
+        watchedState.form.processState = 'failed';
+      });
   });
   autoUpdate(watchedState.form.feeds);
 };
