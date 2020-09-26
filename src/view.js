@@ -1,47 +1,57 @@
-import _ from 'lodash';
+import onChange from 'on-change';
 import i18next from 'i18next';
-
+import _ from 'lodash';
 /* eslint no-param-reassign:
-["error", { "props": true, "ignorePropertyModificationsFor": ["element"] }] */
+["error", { "props": true, "ignorePropertyModificationsFor": ["button"] }] */
 
 const periodForRemoveELement = 5000;
+const hintElement = document.querySelector('.hint');
+const formElement = document.querySelector('.rss-form');
+const fieldElement = document.querySelector('.form-control');
+const wrapper = document.querySelector('.feeds');
+const mainTitleElement = document.querySelector('.main-title');
+const submitButtonElement = document.querySelector('.submit-btn');
+const copyrightElement = document.querySelector('.copyright');
+const promoElement = document.querySelector('.info');
+const toggleLanguageElement = document.querySelector('.toggle-lang');
 
-const renderErrors = (error) => {
-  if (error.errorStatus) {
-    const alertErrorElement = document.createElement('div');
-    const hintElement = document.querySelector('.hint');
-    alertErrorElement.classList.add('alert', 'alert-danger');
-    alertErrorElement.setAttribute('role', 'alert');
-    alertErrorElement.textContent = i18next.t(`networkErrors.${error.errorStatus}`);
-    hintElement.after(alertErrorElement);
-    setTimeout(() => alertErrorElement.remove(), periodForRemoveELement);
-  } else {
-    const fieldElement = document.querySelector('.form-control');
-    const errorElement = fieldElement.nextElementSibling;
-    if (errorElement) {
-      fieldElement.classList.remove('is-invalid');
-      errorElement.remove();
+const renderErrors = (state) => {
+  switch (state.form.processState) {
+    case 'filling': {
+      const { error } = state.form;
+      const errorElement = document.querySelector('.feedback');
+      if (errorElement) {
+        fieldElement.classList.remove('is-invalid');
+        errorElement.remove();
+      }
+      if (_.isNull(error)) {
+        return;
+      }
+      const { message } = error;
+      const feedbackElement = document.createElement('div');
+      feedbackElement.classList.add('feedback', 'invalid-feedback');
+      feedbackElement.innerHTML = i18next.t(message);
+      fieldElement.classList.add('is-invalid');
+      fieldElement.after(feedbackElement);
+      break;
     }
-    if (_.isEqual(error, {})) {
-      return;
+    case 'failed': {
+      const { error } = state;
+      const alertErrorElement = document.createElement('div');
+      alertErrorElement.classList.add('alert', 'alert-danger');
+      alertErrorElement.setAttribute('role', 'alert');
+      alertErrorElement.textContent = i18next.t(`networkErrors.${error.errorStatus}`);
+      hintElement.after(alertErrorElement);
+      setTimeout(() => alertErrorElement.remove(), periodForRemoveELement);
+      break;
     }
-    const { message } = error;
-    const feedbackElement = document.createElement('div');
-    feedbackElement.classList.add('invalid-feedback');
-    feedbackElement.innerHTML = i18next.t(message);
-    fieldElement.classList.add('is-invalid');
-    fieldElement.after(feedbackElement);
+    default:
+      break;
   }
-};
-
-const resetForm = () => {
-  const formElement = document.querySelector('.rss-form');
-  formElement.reset();
 };
 
 const renderFeeds = (feeds) => {
   const { name, id } = feeds[feeds.length - 1];
-  const wrapper = document.querySelector('.wrapper');
   const sectionElement = document.createElement('section');
   const titleElement = document.createElement('h2');
   const listElement = document.createElement('ul');
@@ -63,28 +73,31 @@ const renderPosts = (allPosts) => {
   });
 };
 
-const renderSpinner = (element) => {
-  if (element.disabled) {
-    element.disabled = false;
-    element.innerHTML = i18next.t('addButton');
-  } else {
+const renderSpinner = (processState, element) => {
+  const turnOnSpinner = (button) => {
     const spinnerElement = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
     const textElement = document.createElement('span');
     textElement.textContent = i18next.t('loading');
-    element.disabled = true;
-    element.innerHTML = spinnerElement;
-    element.appendChild(textElement);
-  }
+    button.disabled = true;
+    button.innerHTML = spinnerElement;
+    button.appendChild(textElement);
+  };
+
+  const turnOffSpinner = (button) => {
+    button.disabled = false;
+    button.innerHTML = i18next.t('addButton');
+  };
+
+  const mapping = {
+    filling: () => turnOffSpinner(element),
+    processing: () => turnOnSpinner(element),
+    failed: () => turnOffSpinner(element),
+  };
+
+  mapping[processState]();
 };
 
 const renderText = () => {
-  const mainTitleElement = document.querySelector('.main-title');
-  const hintElement = document.querySelector('.hint');
-  const submitButtonElement = document.querySelector('.submit-btn');
-  const copyrightElement = document.querySelector('.copyright');
-  const fieldElement = document.querySelector('.form-control');
-  const promoElement = document.querySelector('.info');
-  const toggleLanguageElement = document.querySelector('.toggle-lang');
   mainTitleElement.textContent = i18next.t('mainTitle');
   hintElement.textContent = i18next.t('example');
   submitButtonElement.textContent = i18next.t('addButton');
@@ -94,22 +107,43 @@ const renderText = () => {
   toggleLanguageElement.textContent = i18next.t('toggleLang');
 };
 
-const changeLanguage = (lang) => {
-  i18next.changeLanguage(lang, renderText);
+const resetForm = () => {
+  formElement.reset();
 };
 
 const toggleAccessButton = (flag) => {
-  const submitButtonElement = document.querySelector('.submit-btn');
   submitButtonElement.disabled = !flag;
 };
 
-export {
-  renderErrors,
-  renderFeeds,
-  renderPosts,
-  renderSpinner,
-  renderText,
-  resetForm,
-  toggleAccessButton,
-  changeLanguage,
+const getWatchedState = (state) => {
+  const watchedState = onChange(state, (path, currentValue) => {
+    switch (path) {
+      case 'form.valid':
+        toggleAccessButton(currentValue);
+        break;
+      case 'form.error':
+        renderErrors(watchedState);
+        break;
+      case 'form.processState':
+        renderSpinner(currentValue, submitButtonElement);
+        break;
+      case 'form.fields.rssLink':
+        resetForm();
+        break;
+      case 'error':
+        renderErrors(watchedState);
+        break;
+      case 'feeds':
+        renderFeeds(currentValue);
+        break;
+      case 'posts':
+        renderPosts(currentValue);
+        break;
+      default:
+        break;
+    }
+  });
+  return watchedState;
 };
+
+export { getWatchedState, renderText };
