@@ -88,13 +88,11 @@ const renderSpinner = (processState, element) => {
     button.innerHTML = i18next.t('addButton');
   };
 
-  const mapping = {
-    filling: () => turnOffSpinner(element),
-    processing: () => turnOnSpinner(element),
-    failed: () => turnOffSpinner(element),
-  };
-
-  mapping[processState]();
+  if (processState === 'processing') {
+    turnOnSpinner(element);
+  } else {
+    turnOffSpinner(element);
+  }
 };
 
 const renderText = () => {
@@ -116,16 +114,16 @@ const toggleAccessButton = (flag) => {
 };
 
 const getWatchedState = (state) => {
-  const watchedState = onChange(state, (path, currentValue) => {
+  const watchedState = onChange(state, (path, newValue) => {
     switch (path) {
       case 'form.valid':
-        toggleAccessButton(currentValue);
+        toggleAccessButton(newValue);
         break;
       case 'form.error':
         renderErrors(watchedState);
         break;
       case 'form.processState':
-        renderSpinner(currentValue, submitButtonElement);
+        renderSpinner(newValue, submitButtonElement);
         break;
       case 'form.fields.rssLink':
         resetForm();
@@ -134,10 +132,10 @@ const getWatchedState = (state) => {
         renderErrors(watchedState);
         break;
       case 'feeds':
-        renderFeeds(currentValue);
+        renderFeeds(newValue);
         break;
       case 'posts':
-        renderPosts(currentValue);
+        renderPosts(newValue);
         break;
       default:
         break;
