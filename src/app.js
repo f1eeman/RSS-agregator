@@ -2,12 +2,9 @@ import _ from 'lodash';
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
-import { getWatchedState, renderText } from './view.js';
+import getViewComponents from './view.js';
 import parse from './parser.js';
 import resources from './locales/index.js';
-
-/* eslint no-param-reassign:
-  ["error", { "props": true, "ignorePropertyModificationsFor": ["condition"] }] */
 
 const runApp = () => {
   const periodForUpdatePosts = 5000;
@@ -15,6 +12,7 @@ const runApp = () => {
   const formElement = document.querySelector('.rss-form');
   const fieldElement = document.querySelector('.form-control');
   const toggleLanguageElement = document.querySelector('.toggle-lang');
+  const { renderText, getWatchedState } = getViewComponents();
 
   formElement.reset();
   fieldElement.select();
@@ -26,7 +24,7 @@ const runApp = () => {
       fields: {
         rssLink: '',
       },
-      valid: null,
+      valid: true,
       error: null,
     },
     error: null,
@@ -46,22 +44,22 @@ const runApp = () => {
 
   const watchedState = getWatchedState(state);
 
-  const validate = (rssLink, addedRssLinks) => {
+  const validate = (url, addedRssLinks) => {
     try {
       schema
         .notOneOf(addedRssLinks, 'double')
-        .validateSync(rssLink, { abortEarly: false });
+        .validateSync(url, { abortEarly: false });
       return null;
     } catch (error) {
       return error;
     }
   };
 
-  const updateValidationState = (link, condition) => {
-    const addedRssLinks = condition.feeds.map(({ rssLink }) => rssLink);
-    const error = validate(link, addedRssLinks);
-    condition.form.valid = _.isNull(error);
-    condition.form.error = error;
+  const updateValidationState = (link) => {
+    const feedUrls = watchedState.feeds.map(({ rssLink }) => rssLink);
+    const error = validate(link, feedUrls);
+    watchedState.form.valid = _.isNull(error);
+    watchedState.form.error = error;
   };
 
   const autoUpdate = (feeds) => {
@@ -74,11 +72,10 @@ const runApp = () => {
               feedId, title, link, id,
             }),
           );
-          const exisitingPostsIds = watchedState.posts.map((post) => post.id);
-          const filtredPosts = newPosts.filter(({ id }) => !exisitingPostsIds.includes(id));
-          if (filtredPosts.length > 0) {
-            watchedState.posts.push(...filtredPosts);
-          }
+          const filteredPosts = _.differenceWith(
+            newPosts, watchedState.posts, (a, b) => a.id === b.id,
+          );
+          watchedState.posts.push(...filteredPosts);
         });
     });
     setTimeout(autoUpdate.bind(null, feeds), periodForUpdatePosts);
@@ -91,7 +88,8 @@ const runApp = () => {
 
   fieldElement.addEventListener('input', ({ target }) => {
     const rssLink = target.value;
-    updateValidationState(rssLink, watchedState);
+    updateValidationState(rssLink);
+    watchedState.form.fields.rssLink = rssLink;
   });
 
   formElement.addEventListener('submit', (e) => {
@@ -118,12 +116,12 @@ const runApp = () => {
         );
         watchedState.feeds.push(newFeed);
         watchedState.posts.push(...newPosts);
-        watchedState.form.fields.rssLink = rssLink;
+        watchedState.form.fields.rssLink = '';
         watchedState.form.processState = 'filling';
       })
       .catch((error) => {
         watchedState.form.processState = 'failed';
-        watchedState.error = { errorStatus: error.response.status };
+        watchedState.error = error.response.status;
         throw error;
       });
   });
