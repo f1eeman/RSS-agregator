@@ -5,11 +5,11 @@ const getItem = (element) => ({
 });
 
 const parse = (str) => {
-  const domparser = new DOMParser();
-  const xmlDoc = domparser.parseFromString(str, 'text/xml');
+  const domParser = new DOMParser();
+  const xmlDocument = domParser.parseFromString(str, 'text/xml');
   return {
-    name: xmlDoc.querySelector('title').textContent,
-    items: [...xmlDoc.querySelectorAll('item')].map(getItem),
+    name: xmlDocument.querySelector('title').textContent,
+    items: [...xmlDocument.querySelectorAll('item')].map(getItem),
   };
 };
 
