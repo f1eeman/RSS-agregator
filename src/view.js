@@ -39,7 +39,7 @@ export default () => {
       const alertErrorElement = document.createElement('div');
       alertErrorElement.classList.add('alert', 'alert-danger');
       alertErrorElement.setAttribute('role', 'alert');
-      alertErrorElement.textContent = i18next.t(`networkErrors.${error}`);
+      alertErrorElement.textContent = i18next.t([`networkErrors.${error}`, 'networkErrors.default']);
       hintElement.after(alertErrorElement);
       setTimeout(() => alertErrorElement.remove(), periodForRemoveELement);
     };

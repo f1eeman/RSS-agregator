@@ -11,7 +11,8 @@ export default {
     validUrl: 'this must be a valid URL',
     required: 'this is a required field',
     networkErrors: {
-      404: 'Maybe, you have entered an incorrect address or the resource was deleted',
+      404: 'Maybe, you have entered an incorrect address or the resource was deleted.',
+      default: 'Something\'s has gone run. Please, try again.',
     },
     toggleLang: 'RU',
   },
