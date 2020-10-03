@@ -7,6 +7,7 @@ import _ from 'lodash';
 export default () => {
   const periodForRemoveELement = 5000;
   const hintElement = document.querySelector('.hint');
+  const formElement = document.querySelector('.rss-form');
   const fieldElement = document.querySelector('.form-control');
   const wrapper = document.querySelector('.feeds');
   const mainTitleElement = document.querySelector('.main-title');
@@ -113,6 +114,11 @@ export default () => {
     toggleLanguageElement.textContent = i18next.t('toggleLang');
   };
 
+  const renderOnMount = () => {
+    formElement.reset();
+    fieldElement.select();
+  };
+
   const renderInputValue = (state) => {
     fieldElement.value = state.form.fields.rssLink;
   };
@@ -152,5 +158,5 @@ export default () => {
     return watchedState;
   };
 
-  return { getWatchedState, renderText };
+  return { getWatchedState, renderText, renderOnMount };
 };

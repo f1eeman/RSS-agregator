@@ -12,10 +12,9 @@ const runApp = () => {
   const formElement = document.querySelector('.rss-form');
   const fieldElement = document.querySelector('.form-control');
   const toggleLanguageElement = document.querySelector('.toggle-lang');
-  const { renderText, getWatchedState } = getViewComponents();
+  const { renderText, getWatchedState, renderOnMount } = getViewComponents();
 
-  formElement.reset();
-  fieldElement.select();
+  renderOnMount();
 
   const state = {
     language: 'en',
@@ -63,20 +62,18 @@ const runApp = () => {
   };
 
   const autoUpdate = (feeds) => {
-    feeds.forEach(({ rssLink, id: feedId }) => {
-      axios.get(`${proxyUrl}${rssLink}`)
-        .then((response) => parse(response.data))
-        .then((data) => {
-          const newPosts = data.items.map(
-            ({ title, link, id }) => ({
-              feedId, title, link, id,
-            }),
-          );
-          const filteredPosts = _.differenceWith(
-            newPosts, watchedState.posts, (a, b) => a.id === b.id,
-          );
-          watchedState.posts.push(...filteredPosts);
-        });
+    feeds.forEach(async ({ rssLink, id: feedId }) => {
+      const response = await axios.get(`${proxyUrl}${rssLink}`);
+      const parsedData = parse(response.data);
+      const newPosts = parsedData.items.map(
+        ({ title, link, id }) => ({
+          feedId, title, link, id,
+        }),
+      );
+      const filteredPosts = _.differenceWith(
+        newPosts, watchedState.posts, (a, b) => a.id === b.id,
+      );
+      watchedState.posts.push(...filteredPosts);
     });
     setTimeout(autoUpdate.bind(null, feeds), periodForUpdatePosts);
   };
@@ -87,43 +84,41 @@ const runApp = () => {
   });
 
   fieldElement.addEventListener('input', ({ target }) => {
-    const rssLink = target.value;
+    const rssLink = target.value.trim();
     updateValidationState(rssLink);
     watchedState.form.fields.rssLink = rssLink;
   });
 
-  formElement.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (watchedState.form.processState === 'processing' || !watchedState.form.valid) {
-      return;
+  formElement.addEventListener('submit', async (e) => {
+    try {
+      e.preventDefault();
+      if (watchedState.form.processState === 'processing' || !watchedState.form.valid) {
+        return;
+      }
+      watchedState.form.processState = 'processing';
+      const { rssLink } = watchedState.form.fields;
+      const response = await axios.get(`${proxyUrl}${rssLink}`);
+      const parsedData = parse(response.data);
+      const feedId = _.uniqueId();
+      const newFeed = {
+        id: feedId,
+        name: parsedData.name,
+        rssLink,
+      };
+      const newPosts = parsedData.items.map(
+        ({ title, link, id }) => ({
+          feedId, title, link, id,
+        }),
+      );
+      watchedState.feeds.push(newFeed);
+      watchedState.posts.push(...newPosts);
+      watchedState.form.fields.rssLink = '';
+      watchedState.form.processState = 'filling';
+    } catch (error) {
+      watchedState.form.processState = 'failed';
+      watchedState.error = error.response.status;
+      throw error;
     }
-    watchedState.form.processState = 'processing';
-    const formData = new FormData(e.target);
-    const rssLink = formData.get('url');
-    axios.get(`${proxyUrl}${rssLink}`)
-      .then((response) => parse(response.data))
-      .then((data) => {
-        const feedId = _.uniqueId();
-        const newFeed = {
-          id: feedId,
-          name: data.name,
-          rssLink,
-        };
-        const newPosts = data.items.map(
-          ({ title, link, id }) => ({
-            feedId, title, link, id,
-          }),
-        );
-        watchedState.feeds.push(newFeed);
-        watchedState.posts.push(...newPosts);
-        watchedState.form.fields.rssLink = '';
-        watchedState.form.processState = 'filling';
-      })
-      .catch((error) => {
-        watchedState.form.processState = 'failed';
-        watchedState.error = error.response.status;
-        throw error;
-      });
   });
   autoUpdate(watchedState.feeds);
 };
