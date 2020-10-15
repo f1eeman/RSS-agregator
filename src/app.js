@@ -90,13 +90,13 @@ const runApp = () => {
   });
 
   formElement.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (watchedState.form.processState === 'processing' || !watchedState.form.valid) {
+      return;
+    }
+    watchedState.form.processState = 'processing';
+    const { rssLink } = watchedState.form.fields;
     try {
-      e.preventDefault();
-      if (watchedState.form.processState === 'processing' || !watchedState.form.valid) {
-        return;
-      }
-      watchedState.form.processState = 'processing';
-      const { rssLink } = watchedState.form.fields;
       const response = await axios.get(`${proxyUrl}${rssLink}`);
       const parsedData = parse(response.data);
       const feedId = _.uniqueId();
